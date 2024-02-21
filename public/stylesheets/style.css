@@ -2,7 +2,17 @@ body {
   padding: 50px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
-
+h1 {
+  color: blue;
+}
 a {
-  color: #00B7FF;
+  color: #00b7ff;
+}
+
+label {
+  margin-right: 1em;
+}
+
+form .actions {
+  margin-top: 0.5em;
 }
