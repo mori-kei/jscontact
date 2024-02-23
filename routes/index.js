@@ -6,7 +6,16 @@ const { ValidationError } = require("sequelize");
 router.get("/", async function (req, res, next) {
   const now = new Date();
   const contacts = await models.Contact.findAll();
-  res.render("index", { title: "連絡帳", now: now, contacts: contacts });
+  req.session.view_counter = (req.session.view_counter || 0) + 1;
+  const flashMessage = req.session.flashMessage;
+  delete req.session.flashMessage;
+  res.render("index", {
+    title: "連絡帳",
+    now,
+    contacts,
+    view_counter: req.session.view_counter,
+    flashMessage,
+  });
 });
 router.get("/about", function (req, res, next) {
   res.render("about", { title: "About" });
@@ -23,6 +32,7 @@ router.post("/contacts", async function (req, res, next) {
       email: req.body.email,
     });
     await contact.save();
+    req.session.flashMessage = `新しい連絡先として「${contact.name}」さんを保存しました`; //--- [1]
     res.redirect("/");
   } catch (err) {
     if (err instanceof ValidationError) {
