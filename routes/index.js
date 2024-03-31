@@ -93,4 +93,55 @@ router.get("/categories/:id", async function (req, res, next) {
     contacts,
   });
 });
+
+router.get("/category_form", async function (req, res, next) {
+  res.render("category_form", { title: "カテゴリの作成", category: {} });
+});
+
+router.post("/categories", async function (req, res, next) {
+  const fields = ["name"];
+  try {
+    console.log("posted", req.body);
+    if (req.body.id) {
+      const category = await models.Category.findByPk(req.body.id);
+      category.set(req.body);
+      await category.save({ fields });
+      req.session.flashMessage = `カテゴリ「${category.name}」を更新しました`;
+    } else {
+      const category = models.Category.build(req.body);
+      await category.save({ fields });
+      req.session.flashMessage = `新しいカテゴリとして「${category.name}」を保存しました`;
+    }
+    res.redirect("/");
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      const title = req.body.id ? "カテゴリの更新" : "カテゴリの作成";
+      res.render(`category_form`, { title, category: req.body, err: err });
+    } else {
+      throw err;
+    }
+  }
+});
+router.get("/categories/:id/edit", async function (req, res, next) {
+  const category = await models.Category.findByPk(req.params.id);
+  res.render("category_form", { title: "カテゴリの更新", category: category });
+});
+router.post("/categories/:id/delete", async function (req, res, next) {
+  console.log(req.params);
+  const categoryId = req.params.id;
+  const assosiated_contact = await models.Contact.findOne({
+    where: {
+      categoryId: categoryId,
+    },
+  });
+  const category = await models.Category.findByPk(categoryId);
+  if (assosiated_contact) {
+    req.session.flashMessage = `紐づいた連絡先があるため削除できませんでした`;
+    res.redirect("/");
+  } else {
+    await category.destroy();
+    req.session.flashMessage = `カテゴリ「${category.name}」を削除しました`;
+    res.redirect("/");
+  }
+});
 module.exports = router;
